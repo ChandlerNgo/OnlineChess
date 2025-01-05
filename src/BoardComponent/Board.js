@@ -29,7 +29,7 @@ const Board = () => {
       {rows.map((row, rowIndex) => (
         <div class="boardRow" key={rowIndex} style={{display: "grid", gridTemplateColumns: "repeat(8, 1fr)", width:"1200px"}}>
           {row.map((square, colIndex) => (
-            <Square key={`${rowIndex}-${colIndex}`} backgroundColor={square.backgroundColor} text={square.text} piece={square.piece}/>
+            <Square key={`${rowIndex}-${colIndex}`} backgroundColor={square.backgroundColor} text={square.text} piece={square.piece} rowIndex={rowIndex} colIndex={colIndex}/>
           ))}
         </div>
       ))}
