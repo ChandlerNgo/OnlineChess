@@ -1,9 +1,10 @@
-import './Square.css'
+import './Square.css';
+import Piece from '../PieceComponent/Piece';
 
-function Square({backgroundColor, text}) {
+function Square({backgroundColor, text, piece}) {
   return (
     <div className="Square" style={{backgroundColor:backgroundColor}}>
-      {text}
+      <Piece piece={piece}/>
     </div>
   );
 }

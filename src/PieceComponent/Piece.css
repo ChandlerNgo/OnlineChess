@@ -1,0 +1,13 @@
+.Piece {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.Piece img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
