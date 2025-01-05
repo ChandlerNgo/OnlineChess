@@ -1,7 +1,9 @@
+import Board from './BoardComponent/Board'
+
 function App() {
   return (
     <div className="App">
-      Hello
+      <Board/>
     </div>
   );
 }
