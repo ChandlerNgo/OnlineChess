@@ -3,7 +3,11 @@ import Piece from '../PieceComponent/Piece';
 
 function Square({backgroundColor, text, piece, rowIndex, colIndex, onSquareClick, highlighted}) {
   const squareStyle = {
-    backgroundColor: highlighted ? '#FFD700' : backgroundColor,
+    backgroundColor: backgroundColor,
+    borderColor: highlighted ? '#FFD700' : 'none',
+    borderWidth: highlighted ? '10px' : '0',
+    borderStyle: highlighted ? 'solid' : 'none',
+    boxSizing: 'border-box',
   };
 
   return (

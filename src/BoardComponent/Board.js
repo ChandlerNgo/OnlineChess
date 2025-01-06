@@ -45,7 +45,8 @@ const Board = forwardRef((props, ref) => {
   const chessboard = new ChessBoard(pieces);
   function makeMove(row, column, piece){
     // select a start square
-    if(!startSquare && pieces[convertRowColumnToSquare(row,column)]){
+    console.log(row,column, piece,startSquare);
+    if(startSquare === null && pieces[convertRowColumnToSquare(row,column)]){
       setStartSquare(convertRowColumnToSquare(row,column));
       setPotentialSquares(chessboard.findMoves(convertRowColumnToSquare(row,column), piece, moveLog));
     }else{
@@ -54,13 +55,12 @@ const Board = forwardRef((props, ref) => {
         // cancel move
         setStartSquare(null);
         setPotentialSquares(new Set());
-      }else if(pieces[endSquare] && chessboard.isWhite(startSquare) === chessboard.isWhite(endSquare)){
+      }else if(startSquare !== null && pieces[endSquare] && chessboard.isWhite(startSquare) === chessboard.isWhite(endSquare)){
         // pick another piece
         setStartSquare(convertRowColumnToSquare(row,column));
         setPotentialSquares(chessboard.findMoves(convertRowColumnToSquare(row,column), piece, moveLog));
       }else if(pieces[endSquare] && chessboard.isWhite(startSquare) !== chessboard.isWhite(endSquare) && potentialSquares.has(endSquare)){
         // pick a opponent piece
-        console.log("pick a opponent piece");
         // ! check for king checks
         // ! castles
 
@@ -72,8 +72,6 @@ const Board = forwardRef((props, ref) => {
       }else if(potentialSquares.has(endSquare)){
         // pick a potential square
         // ! en passant
-        console.log("pick a potential square");
-        // moveLog startSquare, endSquare, pieceTaken, pieceSquare
         const move = [startSquare, endSquare, pieces[endSquare] ? pieces[endSquare] : null, pieces[endSquare] ? endSquare : null];
         setMoveLog((prevMoveLog) => [...prevMoveLog, move]);
         chessboard.makeMove(startSquare, endSquare);
