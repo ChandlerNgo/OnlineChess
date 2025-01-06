@@ -10,7 +10,7 @@ const Board = () => {
     null, null, null, "K", null, null, null, null,
     null, null, null, null, null, null, null, null,
     null, null, null, null, null, null, null, null,
-    "P", "P", "P", "P", "P", "P", "P", "P",
+    "P", "P", "P", null, "P", "P", "P", "P",
     "R", "N", "B", "Q", "K", "B", "N", "R",
   ]);
 
@@ -22,23 +22,35 @@ const Board = () => {
   const [startSquare, setStartSquare] = useState(null);
   const chessboard = new ChessBoard(pieces);
   function makeMove(row, column, piece){
-    if(!startSquare){
-      // select
+    // select a start square
+    if(!startSquare && pieces[convertRowColumnToSquare(row,column)]){
       setStartSquare(convertRowColumnToSquare(row,column));
       setPotentialSquares(chessboard.findMoves(convertRowColumnToSquare(row,column), piece));
     }else{
       let endSquare = convertRowColumnToSquare(row,column);
-      // move
-      // same color
-      if(pieces[endSquare] && (chessboard.isWhite(endSquare) ^ chessboard.isWhite(startSquare))){
-        setPotentialSquares(chessboard.findMoves((endSquare), piece));
+      if(startSquare === endSquare){
+        setStartSquare(null);
+        setPotentialSquares(new Set());
+      }else if(pieces[endSquare] && chessboard.isWhite(startSquare) === chessboard.isWhite(endSquare)){
+        // pick another piece
+        setStartSquare(convertRowColumnToSquare(row,column));
+        setPotentialSquares(chessboard.findMoves(convertRowColumnToSquare(row,column), piece));
+      }else if(!pieces[endSquare] && !potentialSquares.has(endSquare)){
+        // pick a empty square(cancel)
+        setStartSquare(null);
+        setPotentialSquares(new Set());
+      }else if(pieces[endSquare] && chessboard.isWhite(startSquare) !== chessboard.isWhite(endSquare)){
+        // pick a opponent piece
+        // ! check for king checks
+        // ! castles
+        chessboard.makeMove(startSquare,endSquare);
+        setStartSquare(null);
+        setPotentialSquares(new Set());
       }else if(potentialSquares.has(endSquare)){
-        chessboard.makeMove(startSquare, endSquare);
-        setPotentialSquares(new Set());
+        // pick a potential square
+        chessboard.makeMove(startSquare,endSquare);
         setStartSquare(null);
-      }else{
         setPotentialSquares(new Set());
-        setStartSquare(null);
       }
     }
   }
