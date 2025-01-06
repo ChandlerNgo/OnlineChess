@@ -19,7 +19,11 @@ class ChessBoard{
     }
   }
 
-  findMoves(square, piece){
+  findMoves(square, piece, moveLog){
+    let lastMove = null;
+    if(moveLog.length !== 0){
+      lastMove = moveLog[moveLog.length-1];
+    }
     let moves = new Set();
     if(piece === "K" || piece === "k"){
       moves = this.findKingMoves(square);
@@ -37,7 +41,7 @@ class ChessBoard{
       moves = this.findQueenMoves(square);
     }
     if(piece === "P" || piece === "p"){
-      moves = this.findPawnMoves(square);
+      moves = this.findPawnMoves(square, lastMove);
     }
     return moves;
   }
@@ -135,14 +139,28 @@ class ChessBoard{
     return moves;
   }
 
-  findPawnMoves(square){
+  findPawnMoves(square, lastMove){
     var moves = new Set();
+    console.log(lastMove);
     const [rowIndex, colIndex] = this.convertSquareToRowColumn(square);
+    const difference = this.isWhite(square) ? -1 : 1;
     // one or two moves if it hasnt moved
-    
-    // one moves for the rest
+    if(this.isInBounds(rowIndex+difference,colIndex) && !this.pieces[this.convertRowColumnToSquare(rowIndex+difference,colIndex)]){
+      moves.add(this.convertRowColumnToSquare(rowIndex+difference,colIndex));
+      // one moves for the rest
+      if((rowIndex === 6 || rowIndex === 1) && this.isInBounds(rowIndex+(2*difference),colIndex) && !this.pieces[this.convertRowColumnToSquare(rowIndex+(2*difference),colIndex)]){
+        moves.add(this.convertRowColumnToSquare(rowIndex+(2*difference),colIndex));
+      }
+    }
     // diagonal captures
-    // en passant
+    if(this.isInBounds(rowIndex+difference,colIndex+1) && this.pieces[this.convertRowColumnToSquare(rowIndex+difference,colIndex+1)] && (this.isWhite(square) !== this.isWhite(this.convertRowColumnToSquare(rowIndex+difference,colIndex+1)))){
+      moves.add(this.convertRowColumnToSquare(rowIndex+difference,colIndex+1));
+    }
+    if(this.isInBounds(rowIndex+difference,colIndex-1) && this.pieces[this.convertRowColumnToSquare(rowIndex+difference,colIndex-1)] && (this.isWhite(square) !== this.isWhite(this.convertRowColumnToSquare(rowIndex+difference,colIndex-1)))){
+      moves.add(this.convertRowColumnToSquare(rowIndex+difference,colIndex-1));
+    }
+    // en passant (must happen after first move)
+
     return moves;
   }
 }
