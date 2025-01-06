@@ -1,115 +1,63 @@
 import React, { useState } from "react";
 import Square from "../SquareComponent/Square";
+import PotentialMoves from "./PotentialMoves"
 
 const Board = () => {
   const [pieces, setPieces] = useState([
     "r", "n", "b", "q", "k", "b", "n", "r",
     "p", "p", "p", "p", "p", "p", "p", "p",
     null, null, null, null, null, null, null, null,
-    null, null, null, null, null, null, null, null,
+    null, null, null, "K", null, null, null, null,
     null, null, null, null, null, null, null, null,
     null, null, null, null, null, null, null, null,
     "P", "P", "P", "P", "P", "P", "P", "P",
     "R", "N", "B", "Q", "K", "B", "N", "R",
   ]);
 
-  const handleSquareClick = (rowIndex, colIndex, piece) => {
-    const squareIndex = rowIndex * 8 + colIndex;
-    console.log(squareIndex+1);
-    const updatedPieces = [...pieces];
-    updatedPieces[squareIndex] = null;
-    setPieces(updatedPieces);
-  };
-
   const [potentialSquares, setPotentialSquares] = useState(new Set());
+  const [startingSquare, setStartingSquare] = useState(null);
+  const potentialMoves = new PotentialMoves(pieces);
 
+  function compareColors(start, end){
+    let startColor = pieces[start] === pieces[start].toUpperCase();
+    let endColor = pieces[end] === pieces[end].toUpperCase();
+    return startColor === endColor;
+  }
+  
   const toggleMove = (rowIndex, colIndex, piece) => {
-    const squareIndex = rowIndex * 8 + colIndex;
-    console.log(squareIndex);
-    setPotentialSquares((prev) => {
-      const newSet = new Set(prev);
-      
-      function moveDirection(r,c,rDirection,cDirection,color){
-        let stop = false;
-        while(r >= 0 && c >= 0 && r < 8 && c < 8 && !stop){
-          const currentPiece = pieces[r * 8 + c];
-          
-          if((currentPiece && (r !== rowIndex || c !== colIndex)) && ((color === true && currentPiece.toUpperCase() === currentPiece) || (color === false && currentPiece.toLowerCase() === currentPiece))){
-            // theres a piece thats not in the original spot && the color of the new piece matches the original piece
-            break;
-          }else if((currentPiece && (r !== rowIndex || c !== colIndex)) && ((color === false && currentPiece.toUpperCase() === currentPiece) || (color === true && currentPiece.toLowerCase() === currentPiece))){
-            stop = true;
-          }
-          
-          newSet.add(r * 8 + c);
-      
-          r += rDirection;
-          c += cDirection;
-        }
+    if(startingSquare === null && pieces[rowIndex * 8 + colIndex]){ // selection
+      const moves = potentialMoves.calculateMoves(rowIndex, colIndex, piece);
+      setPotentialSquares(moves);
+      setStartingSquare(rowIndex * 8 + colIndex);
+    }else if(startingSquare !== null && startingSquare === rowIndex*8 + colIndex){
+      potentialSquares.clear();
+      setStartingSquare(null);
+    }else if(startingSquare !== null && potentialSquares.has(rowIndex * 8 + colIndex)){ // moving
+      makeMove(startingSquare,rowIndex * 8 + colIndex,pieces[startingSquare]);
+      setStartingSquare(null);
+      potentialSquares.clear();
+    }else if(startingSquare !== null && !potentialSquares.has(rowIndex * 8 + colIndex)){
+      // switch potential pieces if its same color
+      // cancel if null
+      if(pieces[rowIndex*8 + colIndex] !== null && compareColors(startingSquare, rowIndex*8 + colIndex)){
+        const moves = potentialMoves.calculateMoves(rowIndex, colIndex, piece);
+        setPotentialSquares(moves);
+        setStartingSquare(rowIndex * 8 + colIndex);
+      }else{
+        setStartingSquare(null);
+        potentialSquares.clear();
       }
+    }
+  }
 
-      function surroundingDirection(r,c,size){
-        for(let x = -1 * size; x <= size; x++){
-          for(let y = -1 * size; y <= size; y++){
-            if(r+x >= 0 && c+y >= 0 && r+x < 8 && c+y < 8 && (pieces[(r+x)*8 + c+y] === null || (r+x === rowIndex && c+y === colIndex))){
-              newSet.add((r+x)*8 + c+y);
-            }
-          }
-        }
-      }
-
-      function pawnMoves(r,c,color){
-        // two spaces if on second row
-        if(r === 6 || r === 1){
-          console.log("pawn move");
-          let i = 0;
-          while((r+i) >= 0 && c >= 0 && (r+i) < 8 && c < 8 && i >= -2 && i <= 2 && (pieces[(r+i) * 8 + c] === null || ((r+i) === rowIndex && c === colIndex))){
-            if((r+i) !== rowIndex){
-              newSet.add((r+i)*8 + c);
-            }
-            if(color){
-              i -= 1;
-            }else{
-              i += 1;
-            }
-          }
-        }
-        // one space otherwise
-        // diagonal if en passant or piece there
-      }
-
-      if(piece === "B" || piece === "b"){
-        moveDirection(rowIndex, colIndex, 1, 1, piece === piece.toUpperCase());
-        moveDirection(rowIndex, colIndex, -1, 1, piece === piece.toUpperCase());
-        moveDirection(rowIndex, colIndex, 1, -1, piece === piece.toUpperCase());
-        moveDirection(rowIndex, colIndex, -1, -1, piece === piece.toUpperCase());
-      }
-      if(piece === "R" || piece === "r"){
-        moveDirection(rowIndex, colIndex, 0, 1, piece === piece.toUpperCase());
-        moveDirection(rowIndex, colIndex, 0, -1, piece === piece.toUpperCase());
-        moveDirection(rowIndex, colIndex, 1, 0, piece === piece.toUpperCase());
-        moveDirection(rowIndex, colIndex, -1, 0, piece === piece.toUpperCase());
-      }
-      if(piece === "K" || piece === "k"){
-        surroundingDirection(rowIndex, colIndex, 1);
-      }
-      if(piece === "Q" || piece === "q"){
-        moveDirection(rowIndex, colIndex, 1, 1, piece === piece.toUpperCase());
-        moveDirection(rowIndex, colIndex, -1, 1, piece === piece.toUpperCase());
-        moveDirection(rowIndex, colIndex, 1, -1, piece === piece.toUpperCase());
-        moveDirection(rowIndex, colIndex, -1, -1, piece === piece.toUpperCase());
-        moveDirection(rowIndex, colIndex, 0, 1, piece === piece.toUpperCase());
-        moveDirection(rowIndex, colIndex, 0, -1, piece === piece.toUpperCase());
-        moveDirection(rowIndex, colIndex, 1, 0, piece === piece.toUpperCase());
-        moveDirection(rowIndex, colIndex, -1, 0, piece === piece.toUpperCase());
-        surroundingDirection(rowIndex, colIndex, 1);
-      }
-      if(piece === "P" || piece === "p"){
-        pawnMoves(rowIndex, colIndex, piece === piece.toUpperCase());
-      }
-      return newSet;
-    });
-  };
+  const makeMove = (start, end, piece) => {
+    const updatedPieces = [...pieces];
+    console.log(start,end,piece);
+    updatedPieces[start] = null;
+    updatedPieces[end] = piece;
+    setPieces(updatedPieces);
+    potentialMoves._pieces = updatedPieces;
+  }
 
   const squares = Array.from({ length: 64 }, (_, i) => {
     const row = Math.floor(i / 8);
@@ -132,7 +80,6 @@ const Board = () => {
           ))}
         </div>
       ))}
-      {pieces}
     </div>
   );
 };
