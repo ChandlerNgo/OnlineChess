@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import Square from "../SquareComponent/Square";
-import PotentialMoves from "./PotentialMoves"
+import ChessBoard from "./ChessBoard"
 
 const Board = () => {
   const [pieces, setPieces] = useState([
@@ -14,49 +14,33 @@ const Board = () => {
     "R", "N", "B", "Q", "K", "B", "N", "R",
   ]);
 
-  const [potentialSquares, setPotentialSquares] = useState(new Set());
-  const [startingSquare, setStartingSquare] = useState(null);
-  const potentialMoves = new PotentialMoves(pieces);
-
-  function compareColors(start, end){
-    let startColor = pieces[start] === pieces[start].toUpperCase();
-    let endColor = pieces[end] === pieces[end].toUpperCase();
-    return startColor === endColor;
+  function convertRowColumnToSquare(row, column){
+    return row*8 + column;
   }
-  
-  const toggleMove = (rowIndex, colIndex, piece) => {
-    if(startingSquare === null && pieces[rowIndex * 8 + colIndex]){ // selection
-      const moves = potentialMoves.calculateMoves(rowIndex, colIndex, piece);
-      setPotentialSquares(moves);
-      setStartingSquare(rowIndex * 8 + colIndex);
-    }else if(startingSquare !== null && startingSquare === rowIndex*8 + colIndex){
-      potentialSquares.clear();
-      setStartingSquare(null);
-    }else if(startingSquare !== null && potentialSquares.has(rowIndex * 8 + colIndex)){ // moving
-      makeMove(startingSquare,rowIndex * 8 + colIndex,pieces[startingSquare]);
-      setStartingSquare(null);
-      potentialSquares.clear();
-    }else if(startingSquare !== null && !potentialSquares.has(rowIndex * 8 + colIndex)){
-      // switch potential pieces if its same color
-      // cancel if null
-      if(pieces[rowIndex*8 + colIndex] !== null && compareColors(startingSquare, rowIndex*8 + colIndex)){
-        const moves = potentialMoves.calculateMoves(rowIndex, colIndex, piece);
-        setPotentialSquares(moves);
-        setStartingSquare(rowIndex * 8 + colIndex);
+
+  const [potentialSquares, setPotentialSquares] = useState(new Set());
+  const [startSquare, setStartSquare] = useState(null);
+  const chessboard = new ChessBoard(pieces);
+  function makeMove(row, column, piece){
+    if(!startSquare){
+      // select
+      setStartSquare(convertRowColumnToSquare(row,column));
+      setPotentialSquares(chessboard.findMoves(convertRowColumnToSquare(row,column), piece));
+    }else{
+      let endSquare = convertRowColumnToSquare(row,column);
+      // move
+      // same color
+      if(pieces[endSquare] && (chessboard.isWhite(endSquare) ^ chessboard.isWhite(startSquare))){
+        setPotentialSquares(chessboard.findMoves((endSquare), piece));
+      }else if(potentialSquares.has(endSquare)){
+        chessboard.makeMove(startSquare, endSquare);
+        setPotentialSquares(new Set());
+        setStartSquare(null);
       }else{
-        setStartingSquare(null);
-        potentialSquares.clear();
+        setPotentialSquares(new Set());
+        setStartSquare(null);
       }
     }
-  }
-
-  const makeMove = (start, end, piece) => {
-    const updatedPieces = [...pieces];
-    console.log(start,end,piece);
-    updatedPieces[start] = null;
-    updatedPieces[end] = piece;
-    setPieces(updatedPieces);
-    potentialMoves._pieces = updatedPieces;
   }
 
   const squares = Array.from({ length: 64 }, (_, i) => {
@@ -76,7 +60,7 @@ const Board = () => {
       {rows.map((row, rowIndex) => (
         <div class="boardRow" key={rowIndex} style={{display: "grid", gridTemplateColumns: "repeat(8, 1fr)", width:"1200px"}}>
           {row.map((square, colIndex) => (
-            <Square key={`${rowIndex}-${colIndex}`} backgroundColor={square.backgroundColor} text={square.text} piece={square.piece} rowIndex={rowIndex} colIndex={colIndex} onSquareClick={toggleMove} highlighted={square.highlighted}/>
+            <Square key={`${rowIndex}-${colIndex}`} backgroundColor={square.backgroundColor} text={square.text} piece={square.piece} rowIndex={rowIndex} colIndex={colIndex} onSquareClick={makeMove} highlighted={square.highlighted}/>
           ))}
         </div>
       ))}
