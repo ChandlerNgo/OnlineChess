@@ -63,7 +63,6 @@ const Board = forwardRef((props, ref) => {
         // pick a opponent piece
         // ! check for king checks
         // ! castles
-
         const move = [startSquare, endSquare, pieces[endSquare] ? pieces[endSquare] : null, pieces[endSquare] ? endSquare : null];
         setMoveLog((prevMoveLog) => [...prevMoveLog, move]);
         chessboard.makeMove(startSquare, endSquare);
@@ -72,7 +71,23 @@ const Board = forwardRef((props, ref) => {
       }else if(potentialSquares.has(endSquare)){
         // pick a potential square
         // ! en passant
-        const move = [startSquare, endSquare, pieces[endSquare] ? pieces[endSquare] : null, pieces[endSquare] ? endSquare : null];
+        var move = [startSquare, endSquare, pieces[endSquare] ? pieces[endSquare] : null, pieces[endSquare] ? endSquare : null];
+        if(moveLog.length !== 0){
+          const difference = chessboard.isWhite(startSquare) ? -1 : 1;
+          const [defendingStartSquare,defendingSquare,pieceTaken,pieceLocation] = moveLog[moveLog.length-1];
+          const [attackingPawnRow,attackingPawnColumn] = convertSquareToRowColumn(startSquare);
+          const [defendingPawnRow,defendingPawnColumn] = convertSquareToRowColumn(defendingSquare);
+          if(chessboard.isWhite(startSquare) !== chessboard.isWhite(defendingSquare) && defendingSquare+(difference*16) === defendingStartSquare){ // opposite colors and two row move
+            if((pieces[startSquare] === "P" || pieces[startSquare] === "p") && (pieces[defendingSquare] === "P" || pieces[defendingSquare] === "p")){ // both pieces are pawns
+              if(attackingPawnRow === defendingPawnRow && (attackingPawnColumn === defendingPawnColumn+1 || attackingPawnColumn === defendingPawnColumn-1)){
+                // delete piece 
+                // change move array
+                move = [startSquare, endSquare, pieces[defendingSquare], defendingSquare];
+                chessboard.removePiece(defendingSquare);
+              }
+            }
+          }
+        }
         setMoveLog((prevMoveLog) => [...prevMoveLog, move]);
         chessboard.makeMove(startSquare, endSquare);
         setStartSquare(null);
