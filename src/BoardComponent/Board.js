@@ -1,13 +1,8 @@
-import React, { useImperativeHandle, forwardRef, useState } from "react";
+import React, { useState } from "react";
 import Square from "../SquareComponent/Square";
 import ChessBoard from "./ChessBoard"
 
-const Board = forwardRef((props, ref) => {
-  useImperativeHandle(ref, () => ({
-    moveBackward,
-    moveForward,
-  }));
-
+function Board(){
   function convertRowColumnToSquare(row, column){
     return row*8 + column;
   }
@@ -32,16 +27,26 @@ const Board = forwardRef((props, ref) => {
   const [potentialSquares, setPotentialSquares] = useState(new Set());
   const [startSquare, setStartSquare] = useState(null);
   const [chessboard, setChessboard] = useState(new ChessBoard());
+  const [currentTurn, setCurrentTurn] = useState("white");
+
+  function flipCurrentTurn(){
+    if(currentTurn === "white"){
+      setCurrentTurn("black");
+    }else{
+      setCurrentTurn("white");
+    }
+  }
+
   function makeMove(row, column, piece){
     // select a start square
     console.log(row,column, piece, startSquare);
-    if(startSquare === null && chessboard.grid[convertRowColumnToSquare(row,column)]){
+    if(startSquare === null && chessboard.grid[convertRowColumnToSquare(row,column)] && currentTurn === piece.color){
       const moves = chessboard.findMoves(convertRowColumnToSquare(row,column), piece, moveLog);
       if(moves.size !== 0){
         setStartSquare(convertRowColumnToSquare(row,column));
         setPotentialSquares(chessboard.findMoves(convertRowColumnToSquare(row,column), piece, moveLog));
       }
-    }else{
+    }else if(startSquare !== null){
       let endSquare = convertRowColumnToSquare(row,column);
       if(startSquare === endSquare || (!chessboard.grid[endSquare] && !potentialSquares.has(endSquare))){
         // cancel move
@@ -61,6 +66,7 @@ const Board = forwardRef((props, ref) => {
         chessboard.makeMove(chessboard.grid[startSquare], endSquare);
         setStartSquare(null);
         setPotentialSquares(new Set());
+        flipCurrentTurn();
       }else if(potentialSquares.has(endSquare)){
         // pick a potential square
         var move = [startSquare, endSquare, chessboard.grid[endSquare] ? chessboard.grid[endSquare] : null, chessboard.grid[endSquare] ? endSquare : null, chessboard.grid[startSquare]];
@@ -101,6 +107,7 @@ const Board = forwardRef((props, ref) => {
         chessboard.makeMove(chessboard.grid[startSquare], endSquare);
         setStartSquare(null);
         setPotentialSquares(new Set());
+        flipCurrentTurn();
       }
     }
   }
@@ -117,17 +124,35 @@ const Board = forwardRef((props, ref) => {
     rows.push(squares.slice(i, i + 8));
   }
 
+  const turnStyle = {
+    display: "grid",
+    placeItems: "center",
+    width:"1200px",
+    margin: "0 auto",
+    backgroundColor: currentTurn === "white" ? "white" : "black",
+    color: currentTurn === "white" ? "black" : "white",
+  }
+
   return (
-    <div class="board" style={{display: "grid", gridTemplateRows: "repeat(8, 1fr)", justifyContent:"center"}}>
-      {rows.map((row, rowIndex) => (
-        <div class="boardRow" key={rowIndex} style={{display: "grid", gridTemplateColumns: "repeat(8, 1fr)", width:"1200px"}}>
-          {row.map((square, colIndex) => (
-            <Square key={`${rowIndex}-${colIndex}`} backgroundColor={square.backgroundColor} text={square.text} piece={square.piece} rowIndex={rowIndex} colIndex={colIndex} onSquareClick={makeMove} highlighted={square.highlighted}/>
-          ))}
-        </div>
-      ))}
-    </div>
+    <>
+      <div class="board" style={{display: "grid", gridTemplateRows: "repeat(8, 1fr)", justifyContent:"center"}}>
+        {rows.map((row, rowIndex) => (
+          <div class="boardRow" key={rowIndex} style={{display: "grid", gridTemplateColumns: "repeat(8, 1fr)", width:"1200px"}}>
+            {row.map((square, colIndex) => (
+              <Square key={`${rowIndex}-${colIndex}`} backgroundColor={square.backgroundColor} text={square.text} piece={square.piece} rowIndex={rowIndex} colIndex={colIndex} onSquareClick={makeMove} highlighted={square.highlighted}/>
+            ))}
+          </div>
+        ))}
+      </div>
+      <div style={turnStyle}>
+        <h1>{currentTurn === "white" ? "White's Turn" : "Black's Turn"}</h1>
+      </div>
+      <div style={{ display: "flex", justifyContent: "center" }}>
+        <button onClick={moveBackward}>Backward</button>
+        <button onClick={moveForward}>Forward</button>
+      </div>
+    </>
   );
-});
+};
 
 export default Board;
