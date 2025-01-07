@@ -17,6 +17,7 @@ class Piece{
       this.color = color;
       this.pieceType = pieceType;
       this.position = position;
+      this.startPosition = position;
       this.isAlive = true;
       this.hasMoved = false;
       this.capturedBy = null;
@@ -30,7 +31,6 @@ class Piece{
   
   move(row, column){
     this.position = [row, column];
-    this.moveHistory.push([row, column]);
     this.hasMoved = true;
   }
 

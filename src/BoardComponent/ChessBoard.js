@@ -109,53 +109,42 @@ class ChessBoard{
       }
     }
     
-    // short castle
-    // if(this.grid[square] === "K"){
-    //   var hasShortRookMoved = false;
-    //   var hasKingMoved = false;
-    //   var hasLongRookMoved = false;
-    //   for(let i = 0; i < moveLog.length; i++){
-    //     let [startSquare, endSquare, pieceTaken, pieceLocation, pieceMoved] = moveLog[i];
-    //     // 56 for white rook long castle
-    //     if(startSquare === 56 && pieceMoved === "R"){
-          
-    //     }
-    //     // 63 for white rook short castle
-    //     // 60 for white king moved
-        
-        
-    //     if(startSquare)
-    //     }
-    //   if(){
-        
-    //   }
+    if(this.grid[square].pieceType === "king" && this.grid[square].color === "white"){
+      console.log("here");
+      // return true if piece not there
+      var hasLongRookMoved = this.grid[56] === null || !(this.grid[56].position[0] === this.grid[56].startPosition[0] && this.grid[56].position[1] === this.grid[56].startPosition[1] && !this.grid[56].hasMoved);
+      var hasKingMoved = this.grid[60] === null || !(this.grid[60].position[0] === this.grid[60].startPosition[0] && this.grid[60].position[1] === this.grid[60].startPosition[1] && !this.grid[60].hasMoved);
+      var hasShortRookMoved = this.grid[63] === null || !(this.grid[63].position[0] === this.grid[63].startPosition[0] && this.grid[63].position[1] === this.grid[63].startPosition[1] && !this.grid[63].hasMoved);
+      var isLongSideClear = !this.grid[57] && !this.grid[58] && !this.grid[59];
+      var isShortSideClear = !this.grid[61] && !this.grid[62];
+      // short castle
+      console.log(hasLongRookMoved,hasKingMoved,hasShortRookMoved,isLongSideClear,isShortSideClear)
+      if(!hasKingMoved && !hasShortRookMoved && isShortSideClear){
+        console.log("short");
+        moves.add(62);
+      }
       
-    //   // long castle
-    //   if(){
-        
-    //   }    
-    // }else{
-    //   var hasShortRookMoved = false;
-    //   var hasKingMoved = false;
-    //   var hasLongRookMoved = false;
-    //   for(let i = 0; i < moveLog.length; i++){
-    //     let [startSquare, endSquare, pieceTaken, pieceLocation, pieceMoved] = moveLog[i];
-    //     // 0 for black rook long castle
-    //     // 7 for black rook short castle
-    //     // 4 for black king moved
-        
-        
-    //     if(startSquare)
-    //     }
-    //   if(){
-        
-    //   }
+      // long castle
+      if(!hasKingMoved && !hasLongRookMoved && isLongSideClear){
+        console.log("long");
+        moves.add(58);
+      }
+    }else{
+      hasLongRookMoved = this.grid[0] === null || !(this.grid[0].position[0] === this.grid[0].startPosition[0] && this.grid[0].position[1] === this.grid[0].startPosition[1] && !this.grid[0].hasMoved);
+      hasKingMoved = this.grid[4] === null || !(this.grid[4].position[0] === this.grid[4].startPosition[0] && this.grid[4].position[1] === this.grid[4].startPosition[1] && !this.grid[4].hasMoved);
+      hasShortRookMoved = this.grid[7] === null || !(this.grid[7].position[0] === this.grid[7].startPosition[0] && this.grid[7].position[1] === this.grid[7].startPosition[1] && !this.grid[7].hasMoved);
+      isLongSideClear = !this.grid[1] && !this.grid[2] && !this.grid[3];
+      isShortSideClear = !this.grid[5] && !this.grid[6];
+      // short castle
+      if(!hasKingMoved && !hasShortRookMoved && isShortSideClear){
+        moves.add(6);
+      }
       
-    //   // long castle
-    //   if(){
-        
-    //   }  
-    // }
+      // long castle
+      if(!hasKingMoved && !hasLongRookMoved && isLongSideClear){
+        moves.add(2);
+      }
+    }
     return moves;
   }
 

@@ -56,7 +56,6 @@ const Board = forwardRef((props, ref) => {
         }
       }else if(chessboard.grid[endSquare] && chessboard.isWhite(startSquare) !== chessboard.isWhite(endSquare) && potentialSquares.has(endSquare)){
         // pick a opponent piece
-        // ! castles
         const move = [startSquare, endSquare, chessboard.grid[endSquare] ? chessboard.grid[endSquare] : null, chessboard.grid[endSquare] ? endSquare : null, chessboard.grid[startSquare]];
         setMoveLog((prevMoveLog) => [...prevMoveLog, move]);
         chessboard.makeMove(chessboard.grid[startSquare], endSquare);
@@ -81,6 +80,23 @@ const Board = forwardRef((props, ref) => {
             }
           }
         }
+
+        if(chessboard.grid[startSquare].pieceType === "king"){
+          if(chessboard.grid[startSquare].color === "white" && startSquare === 60){
+            if(endSquare === 62){
+              chessboard.makeMove(chessboard.grid[63], 61);
+            }else if(endSquare === 58){
+              chessboard.makeMove(chessboard.grid[56], 59);
+            }
+          }else if(chessboard.grid[startSquare].color === "black" && startSquare === 4){
+            if(endSquare === 6){
+              chessboard.makeMove(chessboard.grid[7], 5);
+            }else if(endSquare === 2){
+              chessboard.makeMove(chessboard.grid[0], 3);
+            }
+          }
+        }
+
         setMoveLog((prevMoveLog) => [...prevMoveLog, move]);
         chessboard.makeMove(chessboard.grid[startSquare], endSquare);
         setStartSquare(null);
