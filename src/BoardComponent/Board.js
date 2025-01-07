@@ -8,18 +8,6 @@ const Board = forwardRef((props, ref) => {
     moveForward,
   }));
 
-  
-  const [pieces, setPieces] = useState([
-    "r", "n", "b", "q", "k", "b", "n", "r",
-    "p", "p", "p", "p", "p", "p", "p", "p",
-    null, null, null, null, null, null, null, null,
-    null, null, null, "K", null, null, null, null,
-    null, null, null, null, null, null, null, null,
-    null, null, null, null, null, null, null, null,
-    "P", "P", "P", null, "P", "P", "P", "P",
-    "R", "N", "B", "Q", "K", "B", "N", "R",
-  ]);
-
   function convertRowColumnToSquare(row, column){
     return row*8 + column;
   }
@@ -39,57 +27,62 @@ const Board = forwardRef((props, ref) => {
     // Add your logic here
   };
   
+  // [startSquare, endSquare, pieceTaken, pieceLocation, pieceMoved]
   const [moveLog, setMoveLog] = useState([]);
   const [potentialSquares, setPotentialSquares] = useState(new Set());
   const [startSquare, setStartSquare] = useState(null);
-  const chessboard = new ChessBoard(pieces);
+  const [chessboard, setChessboard] = useState(new ChessBoard());
   function makeMove(row, column, piece){
     // select a start square
-    console.log(row,column, piece,startSquare);
-    if(startSquare === null && pieces[convertRowColumnToSquare(row,column)]){
-      setStartSquare(convertRowColumnToSquare(row,column));
-      setPotentialSquares(chessboard.findMoves(convertRowColumnToSquare(row,column), piece, moveLog));
+    console.log(row,column, piece, startSquare);
+    if(startSquare === null && chessboard.grid[convertRowColumnToSquare(row,column)]){
+      const moves = chessboard.findMoves(convertRowColumnToSquare(row,column), piece, moveLog);
+      if(moves.size !== 0){
+        setStartSquare(convertRowColumnToSquare(row,column));
+        setPotentialSquares(chessboard.findMoves(convertRowColumnToSquare(row,column), piece, moveLog));
+      }
     }else{
       let endSquare = convertRowColumnToSquare(row,column);
-      if(startSquare === endSquare || (!pieces[endSquare] && !potentialSquares.has(endSquare))){
+      if(startSquare === endSquare || (!chessboard.grid[endSquare] && !potentialSquares.has(endSquare))){
         // cancel move
         setStartSquare(null);
         setPotentialSquares(new Set());
-      }else if(startSquare !== null && pieces[endSquare] && chessboard.isWhite(startSquare) === chessboard.isWhite(endSquare)){
+      }else if(startSquare !== null && chessboard.grid[endSquare] && chessboard.isWhite(startSquare) === chessboard.isWhite(endSquare)){
         // pick another piece
-        setStartSquare(convertRowColumnToSquare(row,column));
-        setPotentialSquares(chessboard.findMoves(convertRowColumnToSquare(row,column), piece, moveLog));
-      }else if(pieces[endSquare] && chessboard.isWhite(startSquare) !== chessboard.isWhite(endSquare) && potentialSquares.has(endSquare)){
+        const moves = chessboard.findMoves(convertRowColumnToSquare(row,column), piece, moveLog);
+        if(moves.size !== 0){
+          setStartSquare(convertRowColumnToSquare(row,column));
+          setPotentialSquares(chessboard.findMoves(convertRowColumnToSquare(row,column), piece, moveLog));
+        }
+      }else if(chessboard.grid[endSquare] && chessboard.isWhite(startSquare) !== chessboard.isWhite(endSquare) && potentialSquares.has(endSquare)){
         // pick a opponent piece
-        // ! check for king checks
         // ! castles
-        const move = [startSquare, endSquare, pieces[endSquare] ? pieces[endSquare] : null, pieces[endSquare] ? endSquare : null];
+        const move = [startSquare, endSquare, chessboard.grid[endSquare] ? chessboard.grid[endSquare] : null, chessboard.grid[endSquare] ? endSquare : null, chessboard.grid[startSquare]];
         setMoveLog((prevMoveLog) => [...prevMoveLog, move]);
-        chessboard.makeMove(startSquare, endSquare);
+        chessboard.makeMove(chessboard.grid[startSquare], endSquare);
         setStartSquare(null);
         setPotentialSquares(new Set());
       }else if(potentialSquares.has(endSquare)){
         // pick a potential square
-        // ! en passant
-        var move = [startSquare, endSquare, pieces[endSquare] ? pieces[endSquare] : null, pieces[endSquare] ? endSquare : null];
+        var move = [startSquare, endSquare, chessboard.grid[endSquare] ? chessboard.grid[endSquare] : null, chessboard.grid[endSquare] ? endSquare : null, chessboard.grid[startSquare]];
         if(moveLog.length !== 0){
           const difference = chessboard.isWhite(startSquare) ? -1 : 1;
           const [defendingStartSquare,defendingSquare,pieceTaken,pieceLocation] = moveLog[moveLog.length-1];
           const [attackingPawnRow,attackingPawnColumn] = convertSquareToRowColumn(startSquare);
           const [defendingPawnRow,defendingPawnColumn] = convertSquareToRowColumn(defendingSquare);
           if(chessboard.isWhite(startSquare) !== chessboard.isWhite(defendingSquare) && defendingSquare+(difference*16) === defendingStartSquare){ // opposite colors and two row move
-            if((pieces[startSquare] === "P" || pieces[startSquare] === "p") && (pieces[defendingSquare] === "P" || pieces[defendingSquare] === "p")){ // both pieces are pawns
+            if((chessboard.grid[startSquare].pieceType === "pawn") && (chessboard.grid[defendingSquare].pieceType === "pawn")){ // both chessboard.grid are pawns
               if(attackingPawnRow === defendingPawnRow && (attackingPawnColumn === defendingPawnColumn+1 || attackingPawnColumn === defendingPawnColumn-1)){
                 // delete piece 
                 // change move array
-                move = [startSquare, endSquare, pieces[defendingSquare], defendingSquare];
+                move = [startSquare, endSquare, chessboard.grid[defendingSquare], defendingSquare, chessboard.grid[startSquare]];
                 chessboard.removePiece(defendingSquare);
               }
             }
           }
         }
         setMoveLog((prevMoveLog) => [...prevMoveLog, move]);
-        chessboard.makeMove(startSquare, endSquare);
+        chessboard.makeMove(chessboard.grid[startSquare], endSquare);
         setStartSquare(null);
         setPotentialSquares(new Set());
       }
@@ -100,7 +93,7 @@ const Board = forwardRef((props, ref) => {
     const row = Math.floor(i / 8);
     const col = i % 8;
     const backgroundColor = (row + col) % 2 === 0 ? "#f0d9b5" : "#b58863";
-    return {backgroundColor, text: `${row},${col}`, piece:pieces[i], highlighted: potentialSquares.has(i)};
+    return {backgroundColor, text: `${row},${col}`, piece: chessboard.grid[i], highlighted: potentialSquares.has(i)};
   });
 
   const rows = [];

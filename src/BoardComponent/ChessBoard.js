@@ -1,6 +1,30 @@
+import Piece from "./Piece";
+
 class ChessBoard{
-  constructor(pieces){
-    this.pieces = pieces;
+  constructor(){
+      this.grid = Array(64).fill(null);
+      this.initializeBoard();
+  }
+
+  initializeBoard(){
+    const pieceOrder = ['rook', 'knight', 'bishop', 'queen', 'king', 'bishop', 'knight', 'rook'];
+
+    // Place pawns
+    for (let col = 0; col < 8; col++) {
+        this.addPiece(new Piece('black', 'pawn', [1, col]));
+        this.addPiece(new Piece('white', 'pawn', [6, col]));
+    }
+
+    // Place other grid
+    for (let col = 0; col < 8; col++) {
+      this.addPiece(new Piece('white', pieceOrder[col], [7, col]));
+        this.addPiece(new Piece('black', pieceOrder[col], [0, col]));
+    }
+  }
+
+  addPiece(piece){
+      const index = piece.getPieceIndex();
+      this.grid[index] = piece;
   }
 
   convertSquareToRowColumn(square){
@@ -12,7 +36,7 @@ class ChessBoard{
   }
 
   isWhite(square){
-    if(this.pieces[square] === this.pieces[square].toUpperCase()){
+    if(this.grid[square].color === "white"){
       return true;
     }else{
       return false;
@@ -25,69 +49,127 @@ class ChessBoard{
       lastMove = moveLog[moveLog.length-1];
     }
     let moves = new Set();
-    if(piece === "K" || piece === "k"){
-      moves = this.findKingMoves(square);
+    if(piece.pieceType === "king"){
+      moves = this.findKingMoves(square, moveLog);
     }
-    if(piece === "R" || piece === "r"){
-      moves = this.findRookMoves(square);
+    if(piece.pieceType === "rook"){
+    moves = this.findRookMoves(square);
     }
-    if(piece === "N" || piece === "n"){
+    if(piece.pieceType === "knight"){
       moves = this.findKnightMoves(square);
     }
-    if(piece === "B" || piece === "b"){
+    if(piece.pieceType === "bishop"){
       moves = this.findBishopMoves(square);
     }
-    if(piece === "Q" || piece === "q"){
+    if(piece.pieceType === "queen"){
       moves = this.findQueenMoves(square);
     }
-    if(piece === "P" || piece === "p"){
+    if(piece.pieceType === "pawn"){
       moves = this.findPawnMoves(square, lastMove);
     }
     return moves;
   }
 
-  makeMove(startSquare, endSquare){
-    this.pieces[endSquare] = this.pieces[startSquare];
-    this.pieces[startSquare] = null;
+  makeMove(piece, endSquare){
+    const [oldRow, oldCol] = piece.position;
+    const [newRow, newCol] = this.convertSquareToRowColumn(endSquare);
+    const startSquare = oldRow * 8 + oldCol;
+
+    // Validate move and update board state
+    if(this.grid[endSquare]){
+      this.grid[endSquare].capture(piece);
+    }
+    console.log("this is startSquare ", startSquare);
+    console.log(newRow, newCol);
+    this.grid[startSquare] = null;
+    this.grid[endSquare] = piece;
+    piece.position = [newRow, newCol];
+    console.log("this is endSquare ", endSquare);
+    console.log(piece);
+    piece.move(newRow, newCol);
   }
 
   removePiece(square){
-    this.pieces[square] = null;
+    this.grid[square] = null;
   }
 
   isInBounds(row, column){
     return (row >= 0 && row < 8 && column >= 0 && column < 8);
   }
   
-  findKingMoves(square){
+  findKingMoves(square, moveLog){
+    // moveLog = [startSquare, endSquare, pieceTaken, pieceLocation, pieceMoved]
     const moves = new Set();
     const [kingRow,kingColumn] = this.convertSquareToRowColumn(square);
     for(let i = -1; i <= 1; i++){
       for(let j = -1; j <= 1; j++){
-        if((i !== 0 || j !== 0) && (this.pieces[this.convertRowColumnToSquare(kingRow+i,kingColumn+j)] === null || this.isWhite(square) !== this.isWhite(this.convertRowColumnToSquare(kingRow+i,kingColumn+j)))){
+        if((i !== 0 || j !== 0) && this.isInBounds(kingRow+i,kingColumn+j) && (this.grid[this.convertRowColumnToSquare(kingRow+i,kingColumn+j)] === null || this.isWhite(square) !== this.isWhite(this.convertRowColumnToSquare(kingRow+i,kingColumn+j)))){
           moves.add(this.convertRowColumnToSquare(kingRow+i,kingColumn+j));
         }
       }
     }
     
     // short castle
-
-    // long castle
-    
+    // if(this.grid[square] === "K"){
+    //   var hasShortRookMoved = false;
+    //   var hasKingMoved = false;
+    //   var hasLongRookMoved = false;
+    //   for(let i = 0; i < moveLog.length; i++){
+    //     let [startSquare, endSquare, pieceTaken, pieceLocation, pieceMoved] = moveLog[i];
+    //     // 56 for white rook long castle
+    //     if(startSquare === 56 && pieceMoved === "R"){
+          
+    //     }
+    //     // 63 for white rook short castle
+    //     // 60 for white king moved
+        
+        
+    //     if(startSquare)
+    //     }
+    //   if(){
+        
+    //   }
+      
+    //   // long castle
+    //   if(){
+        
+    //   }    
+    // }else{
+    //   var hasShortRookMoved = false;
+    //   var hasKingMoved = false;
+    //   var hasLongRookMoved = false;
+    //   for(let i = 0; i < moveLog.length; i++){
+    //     let [startSquare, endSquare, pieceTaken, pieceLocation, pieceMoved] = moveLog[i];
+    //     // 0 for black rook long castle
+    //     // 7 for black rook short castle
+    //     // 4 for black king moved
+        
+        
+    //     if(startSquare)
+    //     }
+    //   if(){
+        
+    //   }
+      
+    //   // long castle
+    //   if(){
+        
+    //   }  
+    // }
     return moves;
   }
 
-  moveDirection(r, c, rDirection, cDirection, isWhite){
+  moveDirection(r, c, rDirection, cDirection){
     const moves = new Set();
     let stop = false;
     let rowIndex = r;
     let colIndex = c;
+    const piece = this.grid[this.convertRowColumnToSquare(rowIndex,colIndex)];
     while (r >= 0 && c >= 0 && r < 8 && c < 8 && !stop){
-      const currentPiece = this.pieces[r * 8 + c];
-
-      if(currentPiece !== null && (r !== rowIndex || c !== colIndex) && ((isWhite && currentPiece.toUpperCase() === currentPiece) || (!isWhite && currentPiece.toLowerCase() === currentPiece))){
+      const currentPiece = this.grid[r * 8 + c];
+      if(currentPiece !== null && (r !== rowIndex || c !== colIndex) && (piece.color === currentPiece.color)){
         break;
-      }else if(currentPiece !== null && (r !== rowIndex || c !== colIndex) && ((!isWhite && currentPiece.toUpperCase() === currentPiece) || (isWhite && currentPiece.toLowerCase() === currentPiece))){
+      }else if(currentPiece !== null && (r !== rowIndex || c !== colIndex) && (piece.color !== currentPiece.color)){
         stop = true;
       }
       if(r !== rowIndex || c !== colIndex){
@@ -106,11 +188,11 @@ class ChessBoard{
   findRookMoves(square){
     var moves = new Set();
     const [rowIndex, colIndex] = this.convertSquareToRowColumn(square);
-    moves = this.unionSet(moves,this.moveDirection(rowIndex, colIndex, 0, 1, this.isWhite(square)));
+    moves = this.unionSet(moves,this.moveDirection(rowIndex, colIndex, 0, 1));
     
-    moves = this.unionSet(moves,this.moveDirection(rowIndex, colIndex, 0, -1, this.isWhite(square)));
-    moves = this.unionSet(moves,this.moveDirection(rowIndex, colIndex, 1, 0, this.isWhite(square)));
-    moves = this.unionSet(moves,this.moveDirection(rowIndex, colIndex, -1, 0, this.isWhite(square)));
+    moves = this.unionSet(moves,this.moveDirection(rowIndex, colIndex, 0, -1));
+    moves = this.unionSet(moves,this.moveDirection(rowIndex, colIndex, 1, 0));
+    moves = this.unionSet(moves,this.moveDirection(rowIndex, colIndex, -1, 0));
     return moves;
   }
 
@@ -120,7 +202,7 @@ class ChessBoard{
     for(let i = 0; i < knight.length; i++){
       for(let j = 0; j < knight.length; j++){
         const [rowIndex, colIndex] = this.convertSquareToRowColumn(square);
-        if(Math.abs(knight[i]) !== Math.abs(knight[j]) && this.isInBounds(rowIndex+knight[i],colIndex+knight[j]) && (this.pieces[this.convertRowColumnToSquare(rowIndex+knight[i],colIndex+knight[j])] === null || this.isWhite(this.convertRowColumnToSquare(rowIndex+knight[i],colIndex+knight[j])) !== this.isWhite(square))){
+        if(Math.abs(knight[i]) !== Math.abs(knight[j]) && this.isInBounds(rowIndex+knight[i],colIndex+knight[j]) && (this.grid[this.convertRowColumnToSquare(rowIndex+knight[i],colIndex+knight[j])] === null || this.isWhite(this.convertRowColumnToSquare(rowIndex+knight[i],colIndex+knight[j])) !== this.isWhite(square))){
           moves.add(this.convertRowColumnToSquare(rowIndex+knight[i],colIndex+knight[j]));
         }
       }
@@ -131,24 +213,17 @@ class ChessBoard{
   findBishopMoves(square){
     var moves = new Set();
     const [rowIndex, colIndex] = this.convertSquareToRowColumn(square);
-    moves = this.unionSet(moves,this.moveDirection(rowIndex, colIndex, 1, 1, this.isWhite(square)));
-    moves = this.unionSet(moves,this.moveDirection(rowIndex, colIndex, -1, 1, this.isWhite(square)));
-    moves = this.unionSet(moves,this.moveDirection(rowIndex, colIndex, 1, -1, this.isWhite(square)));
-    moves = this.unionSet(moves,this.moveDirection(rowIndex, colIndex, -1, -1, this.isWhite(square)));
+    moves = this.unionSet(moves,this.moveDirection(rowIndex, colIndex, 1, 1));
+    moves = this.unionSet(moves,this.moveDirection(rowIndex, colIndex, -1, 1));
+    moves = this.unionSet(moves,this.moveDirection(rowIndex, colIndex, 1, -1));
+    moves = this.unionSet(moves,this.moveDirection(rowIndex, colIndex, -1, -1));
     return moves;
   }
 
   findQueenMoves(square){
     var moves = new Set();
-    const [rowIndex, colIndex] = this.convertSquareToRowColumn(square);
-    moves = this.unionSet(moves,this.moveDirection(rowIndex, colIndex, 1, 1, this.isWhite(square)));
-    moves = this.unionSet(moves,this.moveDirection(rowIndex, colIndex, -1, 1, this.isWhite(square)));
-    moves = this.unionSet(moves,this.moveDirection(rowIndex, colIndex, 1, -1, this.isWhite(square)));
-    moves = this.unionSet(moves,this.moveDirection(rowIndex, colIndex, -1, -1, this.isWhite(square)));
-    moves = this.unionSet(moves,this.moveDirection(rowIndex, colIndex, 0, 1, this.isWhite(square)));
-    moves = this.unionSet(moves,this.moveDirection(rowIndex, colIndex, 0, -1, this.isWhite(square)));
-    moves = this.unionSet(moves,this.moveDirection(rowIndex, colIndex, 1, 0, this.isWhite(square)));
-    moves = this.unionSet(moves,this.moveDirection(rowIndex, colIndex, -1, 0, this.isWhite(square)));
+    moves = this.unionSet(moves,this.findBishopMoves(square));
+    moves = this.unionSet(moves,this.findRookMoves(square));
     return moves;
   }
 
@@ -158,18 +233,18 @@ class ChessBoard{
     const [rowIndex, colIndex] = this.convertSquareToRowColumn(square);
     const difference = this.isWhite(square) ? -1 : 1;
     // one or two moves if it hasnt moved
-    if(this.isInBounds(rowIndex+difference,colIndex) && this.pieces[this.convertRowColumnToSquare(rowIndex+difference,colIndex)] === null){
+    if(this.isInBounds(rowIndex+difference,colIndex) && this.grid[this.convertRowColumnToSquare(rowIndex+difference,colIndex)] === null){
       moves.add(this.convertRowColumnToSquare(rowIndex+difference,colIndex));
       // one moves for the rest
-      if((rowIndex === 6 || rowIndex === 1) && this.isInBounds(rowIndex+(2*difference),colIndex) && !this.pieces[this.convertRowColumnToSquare(rowIndex+(2*difference),colIndex)]){
+      if((rowIndex === 6 || rowIndex === 1) && this.isInBounds(rowIndex+(2*difference),colIndex) && !this.grid[this.convertRowColumnToSquare(rowIndex+(2*difference),colIndex)]){
         moves.add(this.convertRowColumnToSquare(rowIndex+(2*difference),colIndex));
       }
     }
     // diagonal captures
-    if(this.isInBounds(rowIndex+difference,colIndex+1) && this.pieces[this.convertRowColumnToSquare(rowIndex+difference,colIndex+1)] !== null && (this.isWhite(square) !== this.isWhite(this.convertRowColumnToSquare(rowIndex+difference,colIndex+1)))){
+    if(this.isInBounds(rowIndex+difference,colIndex+1) && this.grid[this.convertRowColumnToSquare(rowIndex+difference,colIndex+1)] !== null && (this.isWhite(square) !== this.isWhite(this.convertRowColumnToSquare(rowIndex+difference,colIndex+1)))){
       moves.add(this.convertRowColumnToSquare(rowIndex+difference,colIndex+1));
     }
-    if(this.isInBounds(rowIndex+difference,colIndex-1) && this.pieces[this.convertRowColumnToSquare(rowIndex+difference,colIndex-1)] !== null && (this.isWhite(square) !== this.isWhite(this.convertRowColumnToSquare(rowIndex+difference,colIndex-1)))){
+    if(this.isInBounds(rowIndex+difference,colIndex-1) && this.grid[this.convertRowColumnToSquare(rowIndex+difference,colIndex-1)] !== null && (this.isWhite(square) !== this.isWhite(this.convertRowColumnToSquare(rowIndex+difference,colIndex-1)))){
       moves.add(this.convertRowColumnToSquare(rowIndex+difference,colIndex-1));
     }
     // en passant (must happen after first move)
@@ -181,7 +256,7 @@ class ChessBoard{
       const [defendingPawnRow,defendingPawnColumn] = this.convertSquareToRowColumn(endSquare);
       console.log(endSquare,startSquare)
       if(this.isWhite(square) !== this.isWhite(endSquare) && endSquare+(difference*16) === startSquare){ // opposite colors and two row move
-        if((this.pieces[square] === "P" || this.pieces[square] === "p") && (this.pieces[endSquare] === "P" || this.pieces[endSquare] === "p")){ // both pieces are pawns
+        if((this.grid[square].pieceType === "pawn") && (this.grid[endSquare].pieceType === "pawn")){ // both grid are pawns
           if(attackingPawnRow === defendingPawnRow && (attackingPawnColumn === defendingPawnColumn+1 || attackingPawnColumn === defendingPawnColumn-1)){
             moves.add(this.convertRowColumnToSquare(attackingPawnRow+difference,defendingPawnColumn));
           }
@@ -189,6 +264,14 @@ class ChessBoard{
       }
     }
     return moves;
+  }
+
+  toString(){
+      let display = '';
+      for (let row = 0; row < 8; row++) {
+          display += this.grid.slice(row * 8, (row + 1) * 8).map(cell => (cell ? cell.pieceType[0].toUpperCase() : '.')).join(' ') + '\n';
+      }
+      return display;
   }
 }
 
